@@ -21,7 +21,6 @@ $types={
 Notification type: <%= @type %>
 Host: <%= @hostname %> (Address <%= @hostaddress %>)
 <%= @hostoutput %>
----------
 }.gsub(/\n/,'<br>'),
  
 'service'=>
@@ -29,7 +28,6 @@ Host: <%= @hostname %> (Address <%= @hostaddress %>)
 Notification type: <%= @type %>
 Host: <%= @hostalias %> (Address <%= @hostaddress %>)
 <%= @serviceoutput %>
---------
 }.gsub(/\n/,'<br>')
 }
  
