@@ -1,0 +1,14 @@
+token: XXXXXXXXXXX
+roomid: 542071
+from: Icinga
+colors: {
+    PROBLEM: red,
+    RECOVERY: green,
+    ACKNOWLEDGEMENT: green,
+    FLAPPINGSTART: purple,
+    FLAPPINGSTOP: green,
+    FLAPPINGDISABLED: gray,
+    DOWNTIMESTART: red,
+    DOWNTIMESTOP: green,
+    DOWNTIMECANCELLED: green 
+}

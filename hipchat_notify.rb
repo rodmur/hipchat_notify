@@ -4,54 +4,31 @@ require 'hipchat-api'
 require 'getopt/long'
 require 'socket'
 require 'erb'
+require 'yaml'
+
+FILENAME='/usr/local/etc/hipchat_notify.yaml'
+data = YAML::load(File.open(FILENAME))
  
-#Do not modify these constants! (after you set these up, of course)
-#HipApiKey='ABCDEFGHKJHKJHKJHKJH'
-HipApiKey='XXXXXXXXXXX'
-Room='Some Room'
-# green room
-GreenRoomID=542071
-# red room
-RedRoomID=584139
-# testing room
-TestRoomID=542730
-FromID='Icinga'
-###
-Colors={
-        'PROBLEM'=>'red',
-        'RECOVERY'=>'green',
-        'ACKNOWLEDGEMENT'=>'green',
-        'FLAPPINGSTART'=>'purple',
-        'FLAPPINGSTOP'=>'green',
-        'FLAPPINGDISABLED'=>'gray',
-        'DOWNTIMESTART'=>'red',
-        'DOWNTIMESTOP'=>'green',
-        'DOWNTIMECANCELLED'=>'green'
-        }
+HipToken=data["token"]
+RoomID=data["roomid"]
+FromID=data["from"]
+Colors=data["colors"]
  
 #ERB templates for message format
 $types={
 'host'=>
-        %q{
-<%= @timestamp %> - Host <%= @hostname %>  (Origin: nagios@<%= @nagioshost %>)
-Details:
-        Notification type: <%= @type %>
-        Host: <%= @hostname %> (Address <%= @hostaddress %>)
-        State: <%= @hoststate %>
-        Info:
-        <%= @hostoutput %>
+        %q{ <%= @timestamp %> - Origin: nagios@<%= @nagioshost %>
+Notification type: <%= @type %>
+Host: <%= @hostname %> (Address <%= @hostaddress %>)
+<%= @hostoutput %>
 ---------
 }.gsub(/\n/,'<br>'),
  
 'service'=>
-        %q{
-<%= @timestamp %> - Service <%= @servicedesc %> on Host <%= @hostalias %> (Origin: nagios@<%= @nagioshost %>)
-Details:
-        Notification type: <%= @type %>
-        Host: <%= @hostalias %> (Address <%= @hostaddress %>)
-        State: <%= @servicestate %>
-        Info:
-        <%= @serviceoutput %>
+        %q{ <%= @timestamp %> - Origin: nagios@<%= @nagioshost %>
+Notification type: <%= @type %>
+Host: <%= @hostalias %> (Address <%= @hostaddress %>)
+<%= @serviceoutput %>
 --------
 }.gsub(/\n/,'<br>')
 }
@@ -92,35 +69,24 @@ if($opts['type'] == 'host')
         @hostname,@timestamp,@type,@hostaddress,@hoststate,@hostoutput = $opts['inputs'].split('|')
         msg=ERB.new($types[ $opts['type']  ]).result()
         whichcolor=Colors[@type] || 'gray'
-	if @type == 'PROBLEM'
-#		RoomID = RedRoomID
-		RoomID = TestRoomID
-	else
-#		RoomID = GreenRoomID
-		RoomID = TestRoomID
-	end
 elsif ($opts['type'] == 'service')
         @nagioshost=Socket.gethostname.split('.')[0]
         @servicedesc,@hostalias,@timestamp,@type,@hostaddress,@servicestate,@serviceoutput = $opts['inputs'].split('|')
         msg=ERB.new($types[ $opts['type'] ]).result()
 	if @type == 'PROBLEM'
-#		RoomID = RedRoomID
-		RoomID = TestRoomID
 		if @servicestate == 'WARNING'
 			whichcolor = 'yellow'
 		elsif @servicestate == 'CRITICAL'
 			whichcolor = 'red'
 		end
 	else
-#		RoomID = GreenRoomID
-		RoomID = TestRoomID
         	whichcolor=Colors[@type] || 'gray'
 	end
 end
  
 conn=nil
 begin
-        conn=HipChat::API.new(HipApiKey)
+        conn=HipChat::API.new(HipToken)
 rescue Exception => e
         $stderr.puts "Error connecting to HipChat: "+e.inspect
         exit
